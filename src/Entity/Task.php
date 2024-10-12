@@ -6,6 +6,7 @@ use ApiPlatform\Metadata\ApiResource;
 use App\Repository\TaskRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
 #[ApiResource]
@@ -17,12 +18,16 @@ class Task
     private ?int $id = null;
 
     #[ORM\Column(length: 255, nullable: false)]
+    #[Assert\NotBlank]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: false)]
+    #[Assert\NotBlank]
     private ?string $content = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: false)]
+    #[Assert\NotBlank]
+    #[Assert\DateTime]
     private ?\DateTimeInterface $dueDate = null;
 
     #[ORM\Column(type: Types::BOOLEAN, nullable: false)]

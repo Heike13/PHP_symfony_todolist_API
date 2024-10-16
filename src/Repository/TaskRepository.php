@@ -87,9 +87,25 @@ class TaskRepository extends ServiceEntityRepository {
 
         if (!empty($criteria['dueDate'])) {
             try {
-                $dueDate = new \DateTime($criteria['dueDate']);
-                $qb->andWhere('t.dueDate = :dueDate');
-                $parameters['dueDate'] = $dueDate;
+                $dueDate = $criteria['dueDate'];
+                if (preg_match('/^\d{4}$/', $dueDate)) {
+                    // Format YYYY
+                    $qb->andWhere('SUBSTRING(t.dueDate, 1, 4) = :year');
+                    $parameters['year'] = $dueDate;
+                } elseif (preg_match('/^\d{4}-\d{2}$/', $dueDate)) {
+                    // Format YYYY-MM
+                    list($year, $month) = explode('-', $dueDate);
+                    $qb->andWhere('SUBSTRING(t.dueDate, 1, 4) = :year AND SUBSTRING(t.dueDate, 6, 2) = :month');
+                    $parameters['year'] = $year;
+                    $parameters['month'] = $month;
+                } elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dueDate)) {
+                    // Format YYYY-MM-DD
+                    $dueDate = new \DateTime($dueDate);
+                    $qb->andWhere('t.dueDate = :dueDate');
+                    $parameters['dueDate'] = $dueDate;
+                } else {
+                    throw new \InvalidArgumentException('Invalid due date format.');
+                }
             } catch (\Exception $e) {
                 throw new \InvalidArgumentException('Invalid due date format.');
             }

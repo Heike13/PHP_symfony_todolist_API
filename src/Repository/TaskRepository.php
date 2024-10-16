@@ -36,4 +36,21 @@ class TaskRepository extends ServiceEntityRepository {
 
         return $this->paginationService->paginate($dql, [], $page, $limit);
     }
+
+
+    /**
+     * Get all tasks ordered by due date with pagination
+     *
+     * @param int $page
+     * @param int $limit
+     *
+     * @return Paginator object includes the paginated result
+     */
+    public function paginateFindAllByDueDate($page = 1, $limit = 10): Paginator {
+        $dql = $this->createQueryBuilder('t')
+            ->orderBy('t.dueDate', 'ASC')
+            ->getDQL();
+
+        return $this->paginationService->paginate($dql, [], $page, $limit);
+    }
 }

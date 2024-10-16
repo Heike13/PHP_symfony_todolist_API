@@ -3,41 +3,37 @@
 namespace App\Repository;
 
 use App\Entity\Task;
+use App\Service\PaginationService;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 
 /**
  * @extends ServiceEntityRepository<Task>
  */
-class TaskRepository extends ServiceEntityRepository
-{
-    public function __construct(ManagerRegistry $registry)
+class TaskRepository extends ServiceEntityRepository {
+
+    private $paginationService;
+
+    public function __construct(ManagerRegistry $registry, PaginationService $paginationService)
     {
         parent::__construct($registry, Task::class);
+        $this->paginationService = $paginationService;
     }
 
-    //    /**
-    //     * @return Task[] Returns an array of Task objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('t')
-    //            ->andWhere('t.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('t.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    /**
+     * Get all tasks with pagination
+     *
+     * @param integer $page
+     * @param integer $limit
+     * 
+     * @return Paginator
+     */
+    public function paginateFindAll(int $page, int $limit): Paginator {
+        $dql = $this->createQueryBuilder('t')
+            ->orderBy('t.id', 'ASC')
+            ->getDQL();
 
-    //    public function findOneBySomeField($value): ?Task
-    //    {
-    //        return $this->createQueryBuilder('t')
-    //            ->andWhere('t.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        return $this->paginationService->paginate($dql, [], $page, $limit);
+    }
 }

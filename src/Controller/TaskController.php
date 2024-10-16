@@ -120,4 +120,19 @@ class TaskController extends AbstractController {
 
         return $this->json($task, Response::HTTP_OK, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
     }
+
+    // Delete task by id
+    #[Route('/tasks/{id}', name: 'task_delete', methods: ['DELETE'], requirements: ['id' => Requirement::DIGITS])]
+    public function delete(int $id, TaskRepository $taskRepository, EntityManagerInterface $em): Response {
+        $task = $taskRepository->find($id);
+
+        if (!$task) {
+            return $this->json(['error' => 'Tâche non trouvée'], Response::HTTP_NOT_FOUND, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
+        }
+
+        $em->remove($task);
+        $em->flush();
+
+        return $this->json(['message' => 'Tâche supprimée avec succès'], Response::HTTP_OK, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
+    }
 }

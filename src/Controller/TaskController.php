@@ -44,22 +44,37 @@ class TaskController extends AbstractController {
         $cleanedData = InputCleaner::cleanInput($data);
 
         $requiredFields = ['title', 'content', 'dueDate', 'isComplete'];
-        $validationResponse = $this->dataValidator->validateRequiredFields($cleanedData, $requiredFields);
-        if ($validationResponse !== null) {
-            return $validationResponse;
+        $missingFields = [];
+
+        foreach ($requiredFields as $field) {
+            if (!array_key_exists($field, $cleanedData)) {
+                $missingFields[] = $field;
+            }
         }
 
-        $task = new Task();
-        $task->setTitle($cleanedData['title']);
-        $task->setContent($cleanedData['content']);
-        $task->setDueDate(new \DateTime($cleanedData['dueDate']));
-        $task->setIsComplete($cleanedData['isComplete']);
-        $task->setAssignedTo($cleanedData['assignedTo']);
+        if (!empty($missingFields)) {
+            return new JsonResponse([
+                'error' => 'Missing required fields: ' . implode(', ', $missingFields)
+            ], Response::HTTP_BAD_REQUEST, ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
+        }
 
-        $em->persist($task);
-        $em->flush();
+        try {
+            $task = new Task();
+            $task->setTitle($cleanedData['title']);
+            $task->setContent($cleanedData['content']);
+            $task->setDueDate(new \DateTime($cleanedData['dueDate']));
+            $task->setIsComplete($cleanedData['isComplete']);
+            $task->setAssignedTo($cleanedData['assignedTo']);
 
-        return $this->json($task, Response::HTTP_CREATED, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
+            $em->persist($task);
+            $em->flush();
+
+            return $this->json($task, Response::HTTP_CREATED, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'error' => 'An error occurred while creating the task: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     // Get task by id

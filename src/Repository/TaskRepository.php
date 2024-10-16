@@ -53,4 +53,63 @@ class TaskRepository extends ServiceEntityRepository {
 
         return $this->paginationService->paginate($dql, [], $page, $limit);
     }
+
+     /**
+     * Search for tasks based on advanced criteria 
+     * (user, isComplete, keywords, dueDate)
+     *
+     * @param array $criteria
+     * @param int $page
+     * @param int $limit
+     *
+     * @return Paginator
+     */
+    public function paginateFindByCriteria(array $criteria, $page = 1, $limit = 10): Paginator {
+        $qb = $this->createQueryBuilder('t');
+        $parameters = [];
+
+        if (!empty($criteria['user'])) {
+            $qb->andWhere('t.assignedTo = :user');
+            $parameters['user'] = $criteria['user'];
+        }
+
+        if (isset($criteria['isComplete'])) {
+            $isComplete = filter_var($criteria['isComplete'], FILTER_VALIDATE_BOOLEAN);
+            $qb->andWhere('t.isComplete = :isComplete');
+            $parameters['isComplete'] = $isComplete;
+        }
+
+        if (!empty($criteria['keywords'])) {
+            $qb->andWhere('t.title LIKE :keywords OR t.content LIKE :keywords');
+            $parameters['keywords'] = '%' . $criteria['keywords'] . '%';
+        }
+
+        // S'il faut plusieurs mots-clés à rechercher dans le titre et le contenu de la tâche
+        //
+        // if (!empty($criteria['keywords'])) {
+        //     $keywords = explode(' ', $criteria['keywords']);
+        //     $keywordConditions = $qb->expr()->orX();
+    
+        //     foreach ($keywords as $index => $keyword) {
+        //         $keywordParam = 'keyword' . $index;
+        //         $keywordConditions->add($qb->expr()->orX(
+        //             $qb->expr()->like('t.title', ':' . $keywordParam),
+        //             $qb->expr()->like('t.content', ':' . $keywordParam)
+        //         ));
+        //         $parameters[$keywordParam] = '%' . $keyword . '%';
+        //     }
+    
+        //     $qb->andWhere($keywordConditions);
+        // }
+
+        if (!empty($criteria['dueDate'])) {
+            $qb->andWhere('t.dueDate = :dueDate');
+            $parameters['dueDate'] = $criteria['dueDate'];
+        }
+
+        $qb->orderBy('t.dueDate', 'ASC');
+
+        $dql = $qb->getDQL();
+        return $this->paginationService->paginate($dql, $parameters, $page, $limit);
+    }
 }

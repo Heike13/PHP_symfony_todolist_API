@@ -1,5 +1,7 @@
 # TEAM Todolist Project
 
+Bienvenue dans ce projet d'entrainement : une API todolist en PHP 8.2 avec Symfony 7.1 
+
 ## Prérequis
 
 Avant de commencer, assurez-vous d'avoir les éléments suivants installés sur votre machine:
@@ -21,7 +23,7 @@ Suivez les étapes ci-dessous pour installer et lancer le projet:
     ```
 
 3. **Accédez à l'application:**
-    Ouvrez votre navigateur et allez à l'adresse [http://localhost:8000](http://localhost:8000).
+    Ouvrez votre navigateur et allez à l'adresse [http://localhost:8080](http://localhost:8080).
 Suivez les étapes ci-dessous pour installer et lancer le projet
 
 ## Commandes 
@@ -57,11 +59,11 @@ Suivez les étapes ci-dessous pour installer et lancer le projet
 *toutes les tâches sans ordres particuliers*
 *paramètres disponibles : " page, limit "*
 - **GET /tasks/{id}**
-- **GET /tasks/search** 
+- **GET /tasks/search**
 
 *paramètres disponibles : " isComplete, user, dueDate, keywords, page, limit "*
 
-- **GET /tasks/due-date** : 
+- **GET /tasks/due-date** :
 
 *paramètres disponibles : " dueDate, page, limit "*
 - **POST /tasks**

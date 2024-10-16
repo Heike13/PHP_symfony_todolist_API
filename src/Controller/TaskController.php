@@ -135,4 +135,22 @@ class TaskController extends AbstractController {
 
         return $this->json(['message' => 'Tâche supprimée avec succès'], Response::HTTP_OK, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
     }
+
+    /**
+     * Get tasks ordered by dueDate ASC with pagination
+     *
+     * @param Request $request
+     * @param TaskRepository $taskRepository
+     * 
+     * @return JsonResponse with paginated tasks
+     */
+    #[Route('/tasks/due-date', name: 'task_by_dueDate', methods: ['GET'], requirements: ['page' => Requirement::DIGITS, 'limit' => Requirement::DIGITS])]
+    public function findAllByDueDate(Request $request, TaskRepository $taskRepository): JsonResponse {
+
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 5);
+
+        $tasks = $taskRepository->paginateFindAllByDueDate($page, $limit);
+        return $this->json($tasks, JsonResponse::HTTP_OK, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
+    }
 }

@@ -10,6 +10,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
 #[ApiResource]
+#[ORM\HasLifecycleCallbacks]
 class Task
 {
     #[ORM\Id]
@@ -35,6 +36,16 @@ class Task
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $assignedTo = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: false)]
+    #[Assert\NotBlank]
+    #[Assert\DateTime]
+    private ?\DateTimeInterface $createdAt = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: false)]
+    #[Assert\NotBlank]
+    #[Assert\DateTime]
+    private ?\DateTimeInterface $updatedAt = null;
 
     // Getters and setters
     public function getId(): ?int
@@ -100,5 +111,43 @@ class Task
         $this->assignedTo = $assignedTo;
 
         return $this;
+    }
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
+    {
+        $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    #[ORM\PrePersist]
+    public function onPrePersist(): void
+    {
+        $timezone = new \DateTimeZone('Europe/Paris');
+        $this->createdAt = new \DateTimeImmutable('now', $timezone);
+        $this->updatedAt = new \DateTime('now', $timezone);
+    }
+
+    #[ORM\PreUpdate]
+    public function onPreUpdate(): void
+    {
+        $timezone = new \DateTimeZone('Europe/Paris');
+        $this->updatedAt = new \DateTime('now', $timezone);
     }
 }

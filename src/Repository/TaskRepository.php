@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Task;
 use App\Service\PaginationService;
+use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -64,7 +65,7 @@ class TaskRepository extends ServiceEntityRepository {
      *
      * @return Paginator
      */
-    public function paginateFindByCriteria(array $criteria, $page = 1, $limit = 10): Paginator {
+    public function paginateFindByCriteria(array $criteria, $page, $limit): Paginator {
         $qb = $this->createQueryBuilder('t');
         $parameters = [];
 
@@ -73,7 +74,7 @@ class TaskRepository extends ServiceEntityRepository {
             $parameters['user'] = $criteria['user'];
         }
 
-        if (isset($criteria['isComplete'])) {
+        if (!empty($criteria['isComplete'])) {
             $isComplete = filter_var($criteria['isComplete'], FILTER_VALIDATE_BOOLEAN);
             $qb->andWhere('t.isComplete = :isComplete');
             $parameters['isComplete'] = $isComplete;
@@ -84,7 +85,25 @@ class TaskRepository extends ServiceEntityRepository {
             $parameters['keywords'] = '%' . $criteria['keywords'] . '%';
         }
 
-        // S'il faut plusieurs mots-clés à rechercher dans le titre et le contenu de la tâche
+        if (!empty($criteria['dueDate'])) {
+            try {
+                $dueDate = new \DateTime($criteria['dueDate']);
+                $qb->andWhere('t.dueDate = :dueDate');
+                $parameters['dueDate'] = $dueDate;
+            } catch (\Exception $e) {
+                throw new \InvalidArgumentException('Invalid due date format.');
+            }
+        }
+
+        $qb->orderBy('t.dueDate', 'ASC');
+
+        $dql = $qb->getDQL();
+        return $this->paginationService->paginate($dql, $parameters, $page, $limit);
+    }
+}
+
+
+// S'il faut plusieurs mots-clés à rechercher dans le titre et le contenu de la tâche
         //
         // if (!empty($criteria['keywords'])) {
         //     $keywords = explode(' ', $criteria['keywords']);
@@ -101,15 +120,3 @@ class TaskRepository extends ServiceEntityRepository {
     
         //     $qb->andWhere($keywordConditions);
         // }
-
-        if (!empty($criteria['dueDate'])) {
-            $qb->andWhere('t.dueDate = :dueDate');
-            $parameters['dueDate'] = $criteria['dueDate'];
-        }
-
-        $qb->orderBy('t.dueDate', 'ASC');
-
-        $dql = $qb->getDQL();
-        return $this->paginationService->paginate($dql, $parameters, $page, $limit);
-    }
-}

@@ -159,10 +159,12 @@ class TaskController extends AbstractController {
      *
      * @param Request $request
      * @param TaskRepository $taskRepository
+     * @param int $page
+     * @param int $limit
      * 
      * @return JsonResponse
      */
-    #[Route('/tasks/search', name: 'task_search', methods: ['GET'], requirements: [
+    #[Route('/tasks/search', name: 'task_search', methods: ['GET'],  requirements: [
         'page' => Requirement::DIGITS, 
         'limit' => Requirement::DIGITS, 
         'dueDate' => Requirement::DATE_YMD, 
@@ -178,7 +180,7 @@ class TaskController extends AbstractController {
             'dueDate' => $request->query->get('dueDate'),
         ];
 
-        $cleanedCriteria = array_filter($criteria, function($value) {
+        $areCriteria = array_filter($criteria, function($value) {
             return $value !== null && $value !== '';
         });
 
@@ -186,9 +188,11 @@ class TaskController extends AbstractController {
         $limit = $request->query->getInt('limit', 10);
 
         try {
-            $tasks = $taskRepository->paginateFindByCriteria($cleanedCriteria, $page, $limit);
+            $tasks = $taskRepository->paginateFindByCriteria($areCriteria, $page, $limit);
+
         } catch (\Exception $e) {
-            return $this->json(['error' => 'Erreur lors de la recherche des tâches: ' . $e->getMessage()], JsonResponse::HTTP_BAD_REQUEST);
+            return $this->json(['error' => 'Erreur lors de la recherche des tâches par critère : ' . $e->getMessage()],
+            JsonResponse::HTTP_BAD_REQUEST, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
         }
 
         if ($tasks->count() === 0) {

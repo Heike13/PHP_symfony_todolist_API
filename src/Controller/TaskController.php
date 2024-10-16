@@ -61,4 +61,17 @@ class TaskController extends AbstractController {
 
         return $this->json($task, Response::HTTP_CREATED, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
     }
+
+    // Get task by id
+    #[Route('/tasks/{id}', name: 'task_show', methods: ['GET'], requirements: ['id' => Requirement::DIGITS])]
+    public function show(TaskRepository $taskRepository, int $id): JsonResponse{
+
+        $task = $taskRepository->find($id);
+
+        if (!$task) {
+            return $this->json(['error' => 'Tâche non trouvée'], Response::HTTP_NOT_FOUND, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
+        }
+
+        return $this->json($task, Response::HTTP_OK, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
+    }
 }

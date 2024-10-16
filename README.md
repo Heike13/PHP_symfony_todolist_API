@@ -65,7 +65,7 @@ Suivez les étapes ci-dessous pour installer et lancer le projet
 
 - **GET /tasks/due-date** :
 
-*paramètres disponibles : " dueDate, page, limit "*
+*paramètres disponibles : " page, limit "*
 - **POST /tasks**
 - **PUT /tasks/{id}**
 - **DELETE /tasks/{id}**

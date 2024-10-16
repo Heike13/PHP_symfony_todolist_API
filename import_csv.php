@@ -33,21 +33,21 @@ try {
     while (($data = fgetcsv($csvFile, 1000, ',')) !== false) {
         $title = $data[1];
         $content = $data[2];
-        $due_date = $data[3];
-        $is_complete = $data[4];
-        $assigned_to = $data[5];
-        $created_at = $data[6];
-        $updated_at = $data[7];
+        $dueDate = $data[3];
+        $isComplete = $data[4];
+        $assignedTo = $data[5];
+        $createdAt = $data[6];
+        $updatedAt = $data[7];
 
         try {
             $conn->insert('task', [
                 'title' => $title,
                 'content' => $content,
-                'due_date' => $due_date,
-                'is_complete' => $is_complete,
-                'assigned_to' => $assigned_to,
-                'created_at' => $created_at,
-                'updated_at' => $updated_at,
+                'due_date' => $dueDate,
+                'is_complete' => $isComplete,
+                'assigned_to' => $assignedTo,
+                'created_at' => $createdAt,
+                'updated_at' => $updatedAt,
             ]);
         } catch (Exception $e) {
             echo "Failed to insert task: " . $e->getMessage() . "\n";

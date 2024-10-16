@@ -3,8 +3,13 @@
 namespace App\Controller;
 
 // Entity
+use App\Entity\Task;
 use App\Repository\TaskRepository;
-
+// Services
+use App\Service\InputCleaner;
+use App\Service\DataValidator;
+// Doctrine 
+use Doctrine\ORM\EntityManagerInterface;
 // Symfony Components
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -14,8 +19,10 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 
 class TaskController extends AbstractController {
+    private $dataValidator;
 
-    public function __construct() {
+    public function __construct(DataValidator $dataValidator) {
+        $this->dataValidator = $dataValidator;
     }
 
     // Get tasks list
@@ -27,5 +34,31 @@ class TaskController extends AbstractController {
 
         $tasks = $taskRepository->paginateFindAll($page, $limit);
         return $this->json($tasks, Response::HTTP_OK, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
+    }
+
+    // Create task
+    #[Route('/tasks', name: 'task_create', methods: ['POST'])]
+    public function create(Request $request, EntityManagerInterface $em): JsonResponse {
+
+        $data = json_decode($request->getContent(), true);
+        $cleanedData = InputCleaner::cleanInput($data);
+
+        $requiredFields = ['title', 'content', 'dueDate', 'isComplete'];
+        $validationResponse = $this->dataValidator->validateRequiredFields($cleanedData, $requiredFields);
+        if ($validationResponse !== null) {
+            return $validationResponse;
+        }
+
+        $task = new Task();
+        $task->setTitle($cleanedData['title']);
+        $task->setContent($cleanedData['content']);
+        $task->setDueDate(new \DateTime($cleanedData['dueDate']));
+        $task->setIsComplete($cleanedData['isComplete']);
+        $task->setAssignedTo($cleanedData['assignedTo']);
+
+        $em->persist($task);
+        $em->flush();
+
+        return $this->json($task, Response::HTTP_CREATED, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
     }
 }

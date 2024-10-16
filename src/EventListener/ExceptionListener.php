@@ -13,13 +13,11 @@ class ExceptionListener
     {
         $exception = $event->getThrowable();
 
-        // On vérifie si c'est une route non trouvée
         if ($exception instanceof NotFoundHttpException) {
             $response = new JsonResponse([
                 'error' => 'Route inexistante'
             ], 404);
 
-            // On modifie la réponse de l'événement
             $event->setResponse($response);
         }
     }

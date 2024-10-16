@@ -74,4 +74,50 @@ class TaskController extends AbstractController {
 
         return $this->json($task, Response::HTTP_OK, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
     }
+
+    // Update task by id
+    #[Route('/tasks/{id}', name: 'task_update', methods: ['PUT'], requirements: ['id' => Requirement::DIGITS])]
+    public function update(Request $request, int $id, TaskRepository $taskRepository, EntityManagerInterface $em): JsonResponse {
+
+        $task = $taskRepository->find($id);
+        if (!$task) {
+            return $this->json(['error' => 'Tâche non trouvée'], Response::HTTP_NOT_FOUND, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return $this->json(['error' => 'Invalid JSON'], Response::HTTP_BAD_REQUEST, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
+        }
+
+        $cleanedData = InputCleaner::cleanInput($data);
+
+        $fieldsToUpdate = [
+            'title' => 'setTitle',
+            'content' => 'setContent',
+            'dueDate' => function($value) use ($task) { $task->setDueDate(new \DateTime($value)); },
+            'isComplete' => 'setIsComplete',
+            'assignedTo' => 'setAssignedTo'
+        ];
+
+        foreach ($fieldsToUpdate as $field => $method) {
+            if (isset($cleanedData[$field])) {
+                try {
+                    if (is_callable($method)) {
+                        $method($cleanedData[$field]);
+                    } else {
+                        $task->$method($cleanedData[$field]);
+                    }
+                } catch (\Exception $e) {
+                    return $this->json(['error' => 'Invalid data for field: ' . $field], Response::HTTP_BAD_REQUEST, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
+                }
+            }
+        }
+
+        $task->setUpdatedAt(new \DateTime('now', new \DateTimeZone('Europe/Paris')));
+
+        $em->persist($task);
+        $em->flush();
+
+        return $this->json($task, Response::HTTP_OK, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
+    }
 }

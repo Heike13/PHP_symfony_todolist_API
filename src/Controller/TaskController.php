@@ -153,4 +153,48 @@ class TaskController extends AbstractController {
         $tasks = $taskRepository->paginateFindAllByDueDate($page, $limit);
         return $this->json($tasks, JsonResponse::HTTP_OK, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
     }
+
+    /**
+     * Get tasks with advanced search criteria filtering
+     *
+     * @param Request $request
+     * @param TaskRepository $taskRepository
+     * 
+     * @return JsonResponse
+     */
+    #[Route('/tasks/search', name: 'task_search', methods: ['GET'], requirements: [
+        'page' => Requirement::DIGITS, 
+        'limit' => Requirement::DIGITS, 
+        'dueDate' => Requirement::DATE_YMD, 
+        'isComplete' => Requirement::ASCII_SLUG, // Boolean would be better but we can't use it as a route requirement
+        'user' => Requirement::ASCII_SLUG, 
+        'keywords' => Requirement::ASCII_SLUG])]
+    public function search(Request $request, TaskRepository $taskRepository): JsonResponse {
+
+        $criteria = [
+            'user' => $request->query->get('user'),
+            'isComplete' => $request->query->get('isComplete'),
+            'keywords' => $request->query->get('keywords'),
+            'dueDate' => $request->query->get('dueDate'),
+        ];
+
+        $cleanedCriteria = array_filter($criteria, function($value) {
+            return $value !== null && $value !== '';
+        });
+
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 10);
+
+        try {
+            $tasks = $taskRepository->paginateFindByCriteria($cleanedCriteria, $page, $limit);
+        } catch (\Exception $e) {
+            return $this->json(['error' => 'Erreur lors de la recherche des tâches: ' . $e->getMessage()], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        if ($tasks->count() === 0) {
+            return $this->json(['error' => 'Aucune tâche trouvée'], JsonResponse::HTTP_NOT_FOUND, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
+        }
+
+        return $this->json($tasks, JsonResponse::HTTP_OK, [], ['json_encode_options' => JSON_UNESCAPED_UNICODE]);
+    }
 }
